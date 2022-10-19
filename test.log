@@ -1,0 +1,6 @@
+{"level":40,"time":1666189512408,"msg":"error parsing shell words","line":"complete -c git-merge-base -l ‍-1---o---A -d '    \\\\ /      X     / \\\\'"}
+{"level":50,"time":1666189512408,"msg":"missing closing quote"}
+{"level":40,"time":1666189512773,"msg":"error parsing shell words","line":"complete -c ir-keytable -s P -l 'period\\\\' -d 'Sets the period to repeat a keystroke'"}
+{"level":50,"time":1666189512773,"msg":"missing closing quote"}
+{"level":40,"time":1666189512803,"msg":"error parsing shell words","line":"complete -c journalctl -l show-cursor -d 'The cursor is shown after the last entry after two dashes: . sp . if n \\\\{\\\\'"}
+{"level":50,"time":1666189512804,"msg":"missing closing quote"}
