@@ -2,18 +2,17 @@ use std::{
     fmt::Display,
     fs::File,
     io::BufRead,
-    io::{BufReader, Seek, Write},
+    io::{self, BufReader, Seek, Write},
     iter::repeat,
     path::{Path, PathBuf},
     sync::{LazyLock, RwLock},
 };
 
 use anyhow::Result;
-use async_recursion::async_recursion;
 use joinery::JoinableIterator;
 use log::{debug, error, info, trace, warn};
 
-use crate::{completions, config::Config};
+use crate::{completions, config::Config, dir_walker::walk_dir};
 
 pub(crate) fn processing_failed(path: impl AsRef<Path>, err: anyhow::Error) -> Result<!> {
     error!(
@@ -23,20 +22,38 @@ pub(crate) fn processing_failed(path: impl AsRef<Path>, err: anyhow::Error) -> R
     Err(err)
 }
 
-#[async_recursion]
-pub(crate) async fn process_file(path: PathBuf) -> Result<()> {
-    info!(file=path.to_string_lossy(); "processing file");
-    if !path.exists() {
-        warn!("'{path:?}' does not exist, skipping");
-        return Ok(());
-    }
-    if path.is_dir() {
-        for child in path.read_dir()? {
-            if let Err(err) = process_file(child?.path()).await {
-                return processing_failed(path, err).map(|_| unreachable!());
-            };
-        }
-        return Ok(());
+// pub(crate) async fn process_file(path: PathBuf) -> Result<()> {
+//     process_file_given_output_dir(&path, Config::output_dir()).await?;
+//     Ok(())
+// }
+
+pub(crate) async fn process_file_or_dir(path: PathBuf) -> Result<()> {
+    process_file_or_dir_given_output_dir(path, Config::output_dir()).await
+}
+pub(crate) async fn process_file_or_dir_given_output_dir(
+    path: PathBuf,
+    output_dir: impl AsRef<Path>,
+) -> Result<()> {
+    info!(file = path.to_string_lossy(); "processing file or directory");
+    let output_dir = output_dir.as_ref();
+    walk_dir(&path, (), async move |path, _| {
+        process_file_given_output_dir(&path, output_dir).await?;
+        Ok(())
+    })
+    .await
+}
+
+pub(crate) async fn process_file_given_output_dir<'a>(
+    path: &'a Path,
+    output_dir: &Path,
+) -> Result<&'a Path> {
+    info!(file = path.to_string_lossy(); "processing file");
+    if !path.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!("{path:?} is not a file"),
+        )
+        .into());
     }
     let errmsg = format!("reading file {path:?}");
     let file = BufReader::new(File::open(&path)?);
@@ -44,13 +61,14 @@ pub(crate) async fn process_file(path: PathBuf) -> Result<()> {
     let completions =
         completions::Completions::parse(file.lines().map(|line| line.expect(&errmsg))).await?;
     trace!("successfully parsed completions for {path:?}");
-    let location = Config::output_dir().join(
+    let location = output_dir.join(
         path.with_extension("nu")
             .file_name()
             .expect("directory already checked for"),
     );
     debug!("writing completions parsed from {path:?} into {location:?}");
-    Completions::at(location)?.output(completions)
+    Completions::at(&location)?.output(completions)?;
+    Ok(path)
 }
 
 #[derive(Debug)]
@@ -59,13 +77,16 @@ pub(crate) struct Completions<IO: Seek + Write> {
     indent: usize,
 }
 
+impl<IO: Seek + Write> Completions<IO> {
+    fn new(io: IO) -> Self {
+        Self { io, indent: 0 }
+    }
+}
+
 impl Completions<File> {
     fn at(location: impl AsRef<Path>) -> Result<Self> {
         let file = File::create(location)?;
-        Ok(Self {
-            io: file,
-            indent: 0,
-        })
+        Ok(Self::new(file))
     }
 }
 

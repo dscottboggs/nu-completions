@@ -5,7 +5,7 @@ use std::{
     sync::LazyLock,
 };
 
-use clap::{ArgAction, Parser};
+use clap::{ArgAction, Args, Parser, Subcommand};
 use clap_verbosity_flag::Verbosity;
 
 // Fish -> Nushell completion conversion script options
@@ -26,6 +26,32 @@ pub struct Config {
     pub parse: bool,
     #[arg(long = "no-convert", action = ArgAction::SetFalse, default_value_t = true)]
     pub convert: bool,
+    #[command(subcommand)]
+    pub patches: Option<PatchesCommand>,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum PatchesCommand {
+    Patches(PatchesSubCommand),
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Args, Debug)]
+pub struct PatchesSubCommand {
+    #[command(subcommand)]
+    action: PatchesSubCommandAction,
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Subcommand, Debug)]
+pub enum PatchesSubCommandAction {
+    Generate(PatchesGenerateOptions),
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Args, Debug)]
+pub struct PatchesGenerateOptions {
+    #[arg(short, long, default_value_os_t = PathBuf::from(env::var("HOME").expect("$HOME is not set")).join(".config/nushell/completions/definitions"))]
+    pub from: PathBuf,
+    #[arg(short, long, default_value_os_t = PathBuf::from(env::var("HOME").expect("$HOME is not set")).join(".config/nushell/completions/patches"))]
+    pub to: PathBuf,
 }
 
 pub static CONFIG: LazyLock<Config> = LazyLock::new(Config::parse);
@@ -48,5 +74,13 @@ impl Config {
     }
     pub(crate) fn convert() -> bool {
         CONFIG.convert
+    }
+
+    pub(crate) fn generate_patches() -> Option<&'static PatchesGenerateOptions> {
+        CONFIG.patches.as_ref().map(|arg| {
+            let PatchesCommand::Patches(arg) = arg;
+            let PatchesSubCommandAction::Generate(arg) = &arg.action;
+            arg
+        })
     }
 }
