@@ -3,11 +3,10 @@ use std::{
     io,
     path::Path,
     process::{Command, Stdio},
-    sync::Arc,
 };
 
 use anyhow::{anyhow, Result};
-use log::{debug, info, trace, warn};
+use log::{as_debug, debug, error, info, trace, warn};
 use tempfile::tempdir;
 
 use crate::{
@@ -50,7 +49,6 @@ pub(crate) fn patch(source: impl AsRef<Path>, patch: impl AsRef<Path>) -> Result
 }
 
 pub(crate) fn patch_all() -> Result<()> {
-    // for def in Config::output_dir().read_dir()? {
     for source in Config::sources() {
         trace!(source = source.to_string_lossy(); "checking for patches");
         let source: &Path = source.as_ref();
@@ -66,8 +64,8 @@ pub(crate) fn patch_all() -> Result<()> {
                 source = source.to_string_lossy();
                 "found patch file"
             );
-            let _def = source.with_extension("nu");
-            let def = _def
+            let def = source.with_extension("nu");
+            let def = def
                 .file_name()
                 .expect("to be able to extract file name from path"); // this is already checked for
             let def = Config::output_dir().join(def);
@@ -87,43 +85,7 @@ pub(crate) fn patch_all() -> Result<()> {
     Ok(())
 }
 
-pub(crate) async fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<()> {
-    let freshly_generated_store_tmpdir = tempdir()?;
-    let freshly_generated_store = Arc::new(freshly_generated_store_tmpdir.path().to_owned());
-    for source in Config::sources().iter() {
-        let freshly_generated_store_this_iter = freshly_generated_store.clone();
-        walk_dir(
-            source.as_ref(),
-            freshly_generated_store_this_iter,
-            async move |path, freshly_generated_store| {
-                let result = process_file_given_output_dir(&path, &freshly_generated_store).await;
-                let freshly_generated = match result {
-                    Ok(freshly_generated) => freshly_generated,
-                    Err(err) => {
-                        // let err = *err.to_owned();
-                        return processing_failed(source, err).map(|_| unreachable!());
-                    }
-                };
-
-                generate_patch(
-                    &path,
-                    &freshly_generated,
-                    &opts.to.join(
-                        freshly_generated
-                            .with_extension("patch")
-                            .file_name()
-                            .ok_or_else(|| anyhow!("file had no name: {freshly_generated:?}"))?,
-                    ),
-                )
-                .await
-            },
-        )
-        .await?;
-    }
-    Ok(())
-}
-
-async fn generate_patch(source: &Path, generated: &Path, destination: &Path) -> Result<()> {
+fn generate_patch(source: &Path, generated: &Path, destination: &Path) -> Result<()> {
     let mut process = Command::new("diff") // generate a diff
         .arg(generated) // between the freshly generated translation
         .arg(source) // and the version you've modified...
@@ -143,11 +105,44 @@ async fn generate_patch(source: &Path, generated: &Path, destination: &Path) -> 
             Ok(())
         }
         Err(e) => {
+            error!(error = as_debug!(e); "error generating patch");
             Err(if let Err(err_killing) = process.kill() {
+                error!(error = as_debug!(err_killing); "error stopping diff process");
                 anyhow!("while processing this error:\n\t{e}\nanother error occurred:\n\t{err_killing:?}")
             } else {
                 e.into()
             })
         }
     }
+}
+
+pub(crate) fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<()> {
+    let freshly_generated_store = tempdir()?;
+    for source in Config::sources().iter() {
+        walk_dir(
+            source.as_ref(),
+            freshly_generated_store.path(),
+            |path, freshly_generated_store| {
+                let result = process_file_given_output_dir(&path, freshly_generated_store);
+                let freshly_generated = match result {
+                    Ok(freshly_generated) => freshly_generated,
+                    Err(err) => {
+                        return processing_failed(source, err).map(|_| unreachable!());
+                    }
+                };
+
+                generate_patch(
+                    &path,
+                    &freshly_generated,
+                    &opts.to.join(
+                        freshly_generated
+                            .with_extension("patch")
+                            .file_name()
+                            .ok_or_else(|| anyhow!("file had no name: {freshly_generated:?}"))?,
+                    ),
+                )
+            },
+        )?;
+    }
+    Ok(())
 }

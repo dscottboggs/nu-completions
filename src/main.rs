@@ -14,18 +14,11 @@ use nu::processing_failed;
 
 use crate::nu::process_file_or_dir;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // stderrlog::new()
-    //     .quiet(Config::verbose().is_silent())
-    //     .verbosity(Config::verbose().log_level().unwrap_or(log::Level::Error))
-    //     .timestamp(stderrlog::Timestamp::Millisecond)
-    //     .init()
-    //     .expect("failed to initialize logger");
+fn main() -> anyhow::Result<()> {
     femme::with_level(Config::verbose().log_level_filter());
 
     if let Some(options) = Config::generate_patches() {
-        patching::generate_patches(options).await?;
+        patching::generate_patches(options)?;
     } else {
         if Config::convert() {
             if !Config::output_dir().exists() {
@@ -40,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
             info!("beginning translation phase");
             for source in Config::sources().iter() {
                 let path: PathBuf = source.into();
-                if let Err(err) = process_file_or_dir(path).await {
+                if let Err(err) = process_file_or_dir(path) {
                     return processing_failed(source, err).map(|_| unreachable!());
                 }
             }

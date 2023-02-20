@@ -29,15 +29,11 @@ pub(crate) struct CompletionLine {
 impl CompletionLine {
     pub(crate) fn escape_options_which_start_with_a_dash(line: &str) -> Cow<'_, str> {
         regex_replace_all!(r#" \-([slado]) (["']?)\-"#, line, |_, opt, quote| format!(
-            " -{opt} {quote}\u{200D}-"
+            " -{opt} {quote}\u{FFFD}-"
         ))
     }
     pub(crate) fn unescape_option_which_starts_with_a_dash(option: impl AsRef<str>) -> String {
-        let option = option.as_ref();
-        option
-            .strip_prefix('\u{200D}')
-            .unwrap_or(option)
-            .to_string()
+        option.as_ref().replace('\u{FFFD}', "")
     }
 }
 
@@ -46,10 +42,10 @@ mod tests {
     use super::*;
 
     static CASES: [(&str, &str); 2] = [
-        (" -d '-test'", " -d '\u{200D}-test'"),
+        (" -d '-test'", " -d '\u{FFFD}-test'"),
         (
             " -l ---test -d '-with multiple opts' -s -",
-            " -l \u{200D}---test -d '\u{200D}-with multiple opts' -s \u{200D}-",
+            " -l \u{FFFD}---test -d '\u{FFFD}-with multiple opts' -s \u{FFFD}-",
         ),
     ];
 
@@ -66,7 +62,7 @@ mod tests {
     #[test]
     fn test_unescape_options_which_start_with_a_dash() {
         assert_eq!(
-            CompletionLine::unescape_option_which_starts_with_a_dash("\u{200D}-test"),
+            CompletionLine::unescape_option_which_starts_with_a_dash("\u{FFFD}-test"),
             "-test"
         );
     }

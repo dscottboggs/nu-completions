@@ -48,9 +48,9 @@ pub enum PatchesSubCommandAction {
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Args, Debug)]
 pub struct PatchesGenerateOptions {
-    #[arg(short, long, default_value_os_t = PathBuf::from(env::var("HOME").expect("$HOME is not set")).join(".config/nushell/completions/definitions"))]
+    #[arg(short, long, default_value_os_t = xdg_config_path("nushell/completions/definitions"))]
     pub from: PathBuf,
-    #[arg(short, long, default_value_os_t = PathBuf::from(env::var("HOME").expect("$HOME is not set")).join(".config/nushell/completions/patches"))]
+    #[arg(short, long, default_value_os_t = xdg_config_path("nushell/completions/patches"))]
     pub to: PathBuf,
 }
 
@@ -82,5 +82,17 @@ impl Config {
             let PatchesSubCommandAction::Generate(arg) = &arg.action;
             arg
         })
+    }
+}
+
+fn xdg_config_path(subpath: impl AsRef<Path>) -> PathBuf {
+    if let Ok(dir) = env::var("XDG_CONFIG_HOME").map(PathBuf::from) {
+        dir.join(subpath)
+    } else {
+        env::var("HOME")
+            .map(PathBuf::from)
+            .expect("$HOME environment variable to be set")
+            .join(".config")
+            .join(subpath)
     }
 }

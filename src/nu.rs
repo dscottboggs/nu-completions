@@ -10,7 +10,7 @@ use std::{
 
 use anyhow::Result;
 use joinery::JoinableIterator;
-use log::{debug, error, info, trace, warn};
+use log::{as_debug, debug, error, info, trace, warn};
 
 use crate::{completions, config::Config, dir_walker::walk_dir};
 
@@ -22,28 +22,22 @@ pub(crate) fn processing_failed(path: impl AsRef<Path>, err: anyhow::Error) -> R
     Err(err)
 }
 
-// pub(crate) async fn process_file(path: PathBuf) -> Result<()> {
-//     process_file_given_output_dir(&path, Config::output_dir()).await?;
-//     Ok(())
-// }
-
-pub(crate) async fn process_file_or_dir(path: PathBuf) -> Result<()> {
-    process_file_or_dir_given_output_dir(path, Config::output_dir()).await
+pub(crate) fn process_file_or_dir(path: PathBuf) -> Result<()> {
+    process_file_or_dir_given_output_dir(path, Config::output_dir())
 }
-pub(crate) async fn process_file_or_dir_given_output_dir(
+
+pub(crate) fn process_file_or_dir_given_output_dir(
     path: PathBuf,
     output_dir: impl AsRef<Path>,
 ) -> Result<()> {
     info!(file = path.to_string_lossy(); "processing file or directory");
     let output_dir = output_dir.as_ref();
-    walk_dir(&path, (), async move |path, _| {
-        process_file_given_output_dir(&path, output_dir).await?;
-        Ok(())
+    walk_dir(&path, (), |path, _| {
+        process_file_given_output_dir(&path, output_dir).map(|_| ())
     })
-    .await
 }
 
-pub(crate) async fn process_file_given_output_dir<'a>(
+pub(crate) fn process_file_given_output_dir<'a>(
     path: &'a Path,
     output_dir: &Path,
 ) -> Result<&'a Path> {
@@ -51,15 +45,15 @@ pub(crate) async fn process_file_given_output_dir<'a>(
     if !path.is_file() {
         return Err(io::Error::new(
             io::ErrorKind::Unsupported,
-            format!("{path:?} is not a file"),
+            format!("{path:#?} is not a file"),
         )
         .into());
     }
-    let errmsg = format!("reading file {path:?}");
+    let errmsg = format!("reading file {path:#?}");
     let file = BufReader::new(File::open(&path)?);
-    trace!("opened file for processing at {path:?}");
+    trace!(file = as_debug!(path); "opened file for processing");
     let completions =
-        completions::Completions::parse(file.lines().map(|line| line.expect(&errmsg))).await?;
+        completions::Completions::parse(file.lines().map(|line| line.expect(&errmsg)))?;
     trace!("successfully parsed completions for {path:?}");
     let location = output_dir.join(
         path.with_extension("nu")
@@ -104,7 +98,7 @@ impl<IO: Seek + Write> Completions<IO> {
 
     pub(crate) fn output(&mut self, completions: completions::Completions) -> Result<()> {
         let mut command_count: usize = 0;
-        for (cmd, opts) in completions.read().expect("poisoned arc").iter() {
+        for (cmd, opts) in completions.read().expect("rwlock read access").iter() {
             let cmd = if let Err(which::Error::CannotCanonicalize) = which::which(cmd) {
                 cmd.replace('-', " ")
             } else {
@@ -180,7 +174,7 @@ impl<IO: Seek + Write> Completions<IO> {
                     }
                 }
                 if def.is_empty() {
-                    warn!("no option or arg for `{cmd}': {option:?}");
+                    warn!(option = as_debug!(option), cmd = cmd; "no option or arg");
                     continue;
                 }
                 if option.argument.is_some() {
