@@ -81,6 +81,12 @@ impl Completions<File> {
     }
 }
 
+struct Synonym<'a> {
+    synonym_of: String,
+    name: String,
+    description: Option<&'a str>,
+}
+
 impl<IO: Seek + Write> Completions<IO> {
     fn write(&mut self, it: impl Display + log::kv::ToValue) -> Result<&mut Self> {
         trace!(content=it, indent=self.indent; "writing data");
@@ -102,12 +108,10 @@ impl<IO: Seek + Write> Completions<IO> {
                 cmd.to_string()
             };
             let cmd = cmd.as_str();
-            self.write("export extern \"")?
-                .write(cmd)?
-                .write("\" [")?
-                .eol()?;
+            self.write(format!(r#"export extern "{cmd}" ["#))?.eol()?;
             self.indent += 1;
             let mut rules: usize = 0;
+            let mut synonyms = vec![];
             for option in opts {
                 let (mut def, mut arg) = (String::new(), String::new());
                 match &option.old_option.as_slice() {
@@ -122,11 +126,16 @@ impl<IO: Seek + Write> Completions<IO> {
                                 options => {
                                     def.push('-');
                                     def.push_str(&options[0]);
-                                    info!(
-                                        dropped_options=&option.short[1..].iter().map(String::as_str).join_with(", ").to_string().as_str(),
-                                        cmd=cmd;
-                                        "dropping extra short option synonyms",
-                                    );
+                                    for opt in &options[1..] {
+                                        synonyms.push(Synonym {
+                                            name: format!("-{opt}"),
+                                            synonym_of: format!("--{}", &options[0]),
+                                            description: option
+                                                .description
+                                                .as_ref()
+                                                .map(|it| it.as_str()),
+                                        });
+                                    }
                                 }
                             }
                         } else {
@@ -137,21 +146,24 @@ impl<IO: Seek + Write> Completions<IO> {
                                 def.push_str("(-");
                                 def.push_str(&option.short[0]);
                                 def.push(')');
-                                if option.short.len() > 1 {
-                                    info!(
-                                        dropped_options=&option.short[1..].iter().map(String::as_str).join_with(", ").to_string().as_str(),
-
-                                        cmd=cmd;
-                                        "dropping extra short option synonyms",
-                                    );
+                                for opt in &option.short[1..] {
+                                    synonyms.push(Synonym {
+                                        name: format!("-{opt}"),
+                                        synonym_of: format!("--{}", &option.long[0]),
+                                        description: option
+                                            .description
+                                            .as_ref()
+                                            .map(|it| it.as_str()),
+                                    });
                                 }
                             }
-                            if option.long.len() > 1 {
-                                info!(
-                                    dropped_options=&option.long[1..].iter().map(String::as_str).join_with(", ").to_string().as_str(),
-                                    cmd=cmd;
-                                    "dropping extra long option synonyms",
-                                );
+
+                            for opt in &option.long[1..] {
+                                synonyms.push(Synonym {
+                                    name: format!("--{opt}"),
+                                    synonym_of: format!("--{}", &option.long[0]),
+                                    description: option.description.as_ref().map(|it| it.as_str()),
+                                });
                             }
                         }
                     }
@@ -163,11 +175,13 @@ impl<IO: Seek + Write> Completions<IO> {
                     options => {
                         def.push('-');
                         def.push_str(&options[0]);
-                        info!(
-                            dropped_options=&option.old_option[1..].iter().map(String::as_str).join_with(", ").to_string().as_str(),
-                            cmd=cmd;
-                            "dropping extra old-style long option synonyms",
-                        );
+                        for opt in &options[1..] {
+                            synonyms.push(Synonym {
+                                name: format!("-{opt}"),
+                                synonym_of: format!("-{}", &options[0]),
+                                description: option.description.as_ref().map(|it| it.as_str()),
+                            });
+                        }
                     }
                 }
                 if def.is_empty() {
@@ -179,12 +193,27 @@ impl<IO: Seek + Write> Completions<IO> {
                 }
                 let (def, arg) = (def.as_str(), arg.as_str());
                 debug!(def=def, arg=arg, cmd=cmd; "writing command to file");
-                self.write(def)?.write(arg)?;
+                self.write(def.to_owned() + arg)?;
                 if let Some(description) = &option.description {
                     let description = description.as_str();
                     debug!(def=def, description=description; "writing description");
-                    self.write("  # ")?.write(description)?.eol()?;
+                    self.write("  # {".to_owned() + description)?.eol()?;
                 }
+                rules += 1;
+            }
+            for Synonym {
+                synonym_of,
+                name,
+                description,
+            } in &synonyms
+            {
+                debug!(cmd = cmd, opt = name; "writing synonym");
+                let desc = if let Some(desc) = description {
+                    format!("{desc} (synonym of {synonym_of})")
+                } else {
+                    format!("synonym of {synonym_of}")
+                };
+                self.write(format!("{name} #  {desc}"))?.eol()?;
                 rules += 1;
             }
             debug!(rule_count=rules, cmd=cmd; "wrote rules");

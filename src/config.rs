@@ -29,12 +29,12 @@ pub struct Config {
     /// The original fish completion files to be converted
     pub sources: Vec<OsString>,
     #[arg(
-        long = "no-parse",
+        long = "no-patch",
         action = ArgAction::SetFalse,
         default_value_t = true,
-        help = "disable parsing phase"
+        help = "disable patching phase"
     )]
-    pub parse: bool,
+    pub patch: bool,
     #[arg(
         long = "no-convert",
         action = ArgAction::SetFalse,
@@ -93,7 +93,7 @@ impl Config {
         CONFIG.patch_dir.as_path()
     }
     pub(crate) fn patch() -> bool {
-        CONFIG.parse
+        CONFIG.patch
     }
     pub(crate) fn convert() -> bool {
         CONFIG.convert
