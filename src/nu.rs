@@ -37,10 +37,7 @@ pub(crate) fn process_file_or_dir_given_output_dir(
     })
 }
 
-pub(crate) fn process_file_given_output_dir<'a>(
-    path: &'a Path,
-    output_dir: &Path,
-) -> Result<&'a Path> {
+pub(crate) fn process_file_given_output_dir(path: &Path, output_dir: &Path) -> Result<PathBuf> {
     info!(file = path.to_string_lossy(); "processing file");
     if !path.is_file() {
         return Err(io::Error::new(
@@ -62,7 +59,7 @@ pub(crate) fn process_file_given_output_dir<'a>(
     );
     debug!("writing completions parsed from {path:?} into {location:?}");
     Completions::at(&location)?.output(completions)?;
-    Ok(path)
+    Ok(location)
 }
 
 #[derive(Debug)]

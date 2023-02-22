@@ -94,6 +94,7 @@ mod test {
     use super::Completions;
     use anyhow::anyhow;
 
+    #[test]
     fn test_parse_one_completion() -> anyhow::Result<()> {
         let completions = Completions::default();
         completions

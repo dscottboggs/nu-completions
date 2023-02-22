@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io,
+    io::{self, Read, Write},
     path::Path,
     process::{Command, Stdio},
 };
@@ -86,43 +86,69 @@ pub(crate) fn patch_all() -> Result<()> {
 }
 
 fn generate_patch(source: &Path, generated: &Path, destination: &Path) -> Result<()> {
+    trace!(
+        source = as_debug!(source), generated = as_debug!(generated),
+        destination = as_debug!(destination);
+        "checking for file differences"
+    );
     let mut process = Command::new("diff") // generate a diff
         .arg(generated) // between the freshly generated translation
         .arg(source) // and the version you've modified...
         .stdout(Stdio::piped())
         .spawn()?;
-    match File::create(destination) {
-        Ok(mut destination) => {
-            // ...then write the diff to a patch file
-            io::copy(
-                process
-                    .stdout
-                    .as_mut()
-                    .expect("stdout requested but not given"),
-                &mut destination,
-            )?;
-            process.wait()?.exit_ok()?;
-            Ok(())
+    let mut stdout = process.stdout.take().unwrap();
+    let mut buf = [0u8; 0x100];
+    let first_read = {
+        let n = stdout.read(&mut buf)?;
+        &buf[..n]
+    };
+    if first_read.len() > 0 {
+        trace!(first_read = first_read.len(); "read bytes from stdout, writing diff to file");
+        match File::create(destination) {
+            Ok(mut destination) => {
+                // ...then write the diff to a patch file
+                destination.write_all(first_read)?;
+                io::copy(&mut stdout, &mut destination)?;
+                let status = process.wait()?;
+                if let Some(code) = status.code() && code < 2 {
+                    // Exit code 1 indicates success, files differ. 0 indicates
+                    // success, no difference. Greater than that is error.
+                    Ok(())
+                } else {
+                    Ok(status.exit_ok()?)
+                }
+            }
+            Err(e) => {
+                error!(error = as_debug!(e); "error generating patch");
+                Err(if let Err(err_killing) = process.kill() {
+                    error!(error = as_debug!(err_killing); "error stopping diff process");
+                    anyhow!("while processing this error:\n\t{e}\nanother error occurred:\n\t{err_killing:?}")
+                } else {
+                    e.into()
+                })
+            }
         }
-        Err(e) => {
-            error!(error = as_debug!(e); "error generating patch");
-            Err(if let Err(err_killing) = process.kill() {
-                error!(error = as_debug!(err_killing); "error stopping diff process");
-                anyhow!("while processing this error:\n\t{e}\nanother error occurred:\n\t{err_killing:?}")
-            } else {
-                e.into()
-            })
-        }
+    } else {
+        debug!(source = as_debug!(source); "source file did not differ");
+        Ok(())
     }
 }
 
 pub(crate) fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<()> {
     let freshly_generated_store = tempdir()?;
-    for source in Config::sources().iter() {
+    trace!(
+        sources = opts.sources.len(),
+        from = as_debug!(opts.from),
+        to = as_debug!(opts.to),
+        "temp dir" = as_debug!(freshly_generated_store.path());
+        "generating patches"
+    );
+    for source in opts.sources.iter() {
         walk_dir(
             source.as_ref(),
             freshly_generated_store.path(),
             |path, freshly_generated_store| {
+                trace!(path = as_debug!(path); "generating patch");
                 let result = process_file_given_output_dir(&path, freshly_generated_store);
                 let freshly_generated = match result {
                     Ok(freshly_generated) => freshly_generated,
@@ -130,9 +156,14 @@ pub(crate) fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<
                         return processing_failed(source, err).map(|_| unreachable!());
                     }
                 };
+                let Some(file_name) = path.file_name() else {
+                    error!(path = as_debug!(path); "expected file to have filename");
+                    return Err(anyhow!("expected {path:?} to have filename"));
+                };
+                let modified_source = opts.from.join(file_name).with_extension("nu");
 
                 generate_patch(
-                    &path,
+                    &modified_source,
                     &freshly_generated,
                     &opts.to.join(
                         freshly_generated
