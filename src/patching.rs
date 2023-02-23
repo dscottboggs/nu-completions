@@ -12,7 +12,7 @@ use tempfile::tempdir;
 use crate::{
     config::{self, Config},
     dir_walker::walk_dir,
-    nu::{process_file_given_output_dir, processing_failed},
+    nu::{processing_failed, CompletionsProcessor},
 };
 
 pub(crate) fn patch(source: impl AsRef<Path>, patch: impl AsRef<Path>) -> Result<()> {
@@ -143,13 +143,15 @@ pub(crate) fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<
         "temp dir" = as_debug!(freshly_generated_store.path());
         "generating patches"
     );
+    let processor = CompletionsProcessor::default();
     for source in opts.sources.iter() {
         walk_dir(
             source.as_ref(),
             freshly_generated_store.path(),
             |path, freshly_generated_store| {
                 trace!(path = as_debug!(path); "generating patch");
-                let result = process_file_given_output_dir(&path, freshly_generated_store);
+                let result =
+                    processor.process_file_given_output_dir(&path, freshly_generated_store);
                 let freshly_generated = match result {
                     Ok(freshly_generated) => freshly_generated,
                     Err(err) => {

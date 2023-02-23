@@ -44,6 +44,12 @@ pub struct Config {
     pub convert: bool,
     #[command(subcommand)]
     pub patches: Option<PatchesCommand>,
+    /// Add a line to the env config importing all of the defined completions
+    #[arg(short, long)]
+    pub install: bool,
+    /// Where nushell's env.nu is located.
+    #[arg(long, default_value_os_t = xdg_config_path("nushell/env.nu"))]
+    pub install_location: PathBuf,
 }
 
 #[derive(Debug, Subcommand)]
@@ -99,12 +105,27 @@ impl Config {
         CONFIG.convert
     }
 
+    pub(crate) fn install() -> Option<&'static Path> {
+        if CONFIG.install {
+            Some(&CONFIG.install_location)
+        } else {
+            None
+        }
+    }
+
     pub(crate) fn generate_patches() -> Option<&'static PatchesGenerateOptions> {
         CONFIG.patches.as_ref().map(|arg| {
             let PatchesCommand::Patches(arg) = arg;
             let PatchesSubCommandAction::Generate(arg) = &arg.action;
             arg
         })
+    }
+
+    pub(crate) fn imports_location() -> PathBuf {
+        Self::output_dir()
+            .parent()
+            .expect("config output dir has parent")
+            .join("imports.nu")
     }
 }
 

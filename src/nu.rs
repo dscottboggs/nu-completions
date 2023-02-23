@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     fmt::Display,
     fs::File,
     io::BufRead,
@@ -21,46 +22,75 @@ pub(crate) fn processing_failed(path: impl AsRef<Path>, err: anyhow::Error) -> R
     Err(err)
 }
 
-pub(crate) fn process_file_or_dir(path: PathBuf) -> Result<()> {
-    process_file_or_dir_given_output_dir(path, Config::output_dir())
+#[derive(Debug, Default)]
+pub(crate) struct CompletionsProcessor {
+    definition_files: RwLock<HashSet<PathBuf>>,
 }
 
-pub(crate) fn process_file_or_dir_given_output_dir(
-    path: PathBuf,
-    output_dir: impl AsRef<Path>,
-) -> Result<()> {
-    info!(file = path.to_string_lossy(); "processing file or directory");
-    let output_dir = output_dir.as_ref();
-    walk_dir(&path, (), |path, _| {
-        process_file_given_output_dir(&path, output_dir).map(|_| ())
-    })
-}
-
-pub(crate) fn process_file_given_output_dir(path: &Path, output_dir: &Path) -> Result<PathBuf> {
-    info!(file = path.to_string_lossy(); "processing file");
-    if !path.is_file() {
-        return Err(io::Error::new(
-            io::ErrorKind::Unsupported,
-            format!("{path:#?} is not a file"),
-        )
-        .into());
+impl CompletionsProcessor {
+    pub(crate) fn process_file_or_dir(&self, path: PathBuf) -> Result<()> {
+        self.process_file_or_dir_given_output_dir(path, Config::output_dir())
     }
-    let errmsg = format!("reading file {path:#?}");
-    let file = BufReader::new(File::open(&path)?);
-    trace!(file = as_debug!(path); "opened file for processing");
-    let completions =
-        completions::Completions::parse(file.lines().map(|line| line.expect(&errmsg)))?;
-    trace!("successfully parsed completions for {path:?}");
-    let location = output_dir.join(
-        path.with_extension("nu")
-            .file_name()
-            .expect("directory already checked for"),
-    );
-    debug!("writing completions parsed from {path:?} into {location:?}");
-    Completions::at(&location)?.output(completions)?;
-    Ok(location)
-}
 
+    pub(crate) fn process_file_or_dir_given_output_dir(
+        &self,
+        path: PathBuf,
+        output_dir: impl AsRef<Path>,
+    ) -> Result<()> {
+        info!(file = path.to_string_lossy(); "processing file or directory");
+        let output_dir = output_dir.as_ref();
+        walk_dir(&path, (), |path, _| {
+            self.process_file_given_output_dir(&path, output_dir)
+                .map(|_| ())
+        })
+    }
+
+    pub(crate) fn process_file_given_output_dir(
+        &self,
+        path: &Path,
+        output_dir: &Path,
+    ) -> Result<PathBuf> {
+        info!(file = path.to_string_lossy(); "processing file");
+        if !path.is_file() {
+            return Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                format!("{path:#?} is not a file"),
+            )
+            .into());
+        }
+        let errmsg = format!("reading file {path:#?}");
+        let file = BufReader::new(File::open(&path)?);
+        trace!(file = as_debug!(path); "opened file for processing");
+        let completions =
+            completions::Completions::parse(file.lines().map(|line| line.expect(&errmsg)))?;
+        trace!("successfully parsed completions for {path:?}");
+        let location = output_dir.join(
+            path.with_extension("nu")
+                .file_name()
+                .expect("directory already checked for"),
+        );
+        debug!("writing completions parsed from {path:?} into {location:?}");
+        Completions::at(&location)?.output(completions)?;
+        self.definition_files
+            .write()
+            .expect("rwlock write access")
+            .insert(location.clone());
+        Ok(location)
+    }
+
+    pub(crate) fn write_sourcing_file(&self, to: &Path) -> Result<()> {
+        let mut file = File::create(to)?;
+        for def in self
+            .definition_files
+            .read()
+            .expect("rwlock read access")
+            .iter()
+        {
+            file.write_all(format!("source {def:?}\n").as_bytes())?;
+        }
+        Ok(())
+    }
+}
 #[derive(Debug)]
 pub(crate) struct Completions<IO: Seek + Write> {
     io: IO,
