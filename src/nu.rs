@@ -9,7 +9,6 @@ use std::{
 };
 
 use anyhow::Result;
-use joinery::JoinableIterator;
 use log::{as_debug, debug, error, info, trace, warn};
 
 use crate::{completions, config::Config, dir_walker::walk_dir};
