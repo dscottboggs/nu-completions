@@ -1,7 +1,8 @@
 [package]
-name = "nu-completions"
+name = "nu-completion-script"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/dscottboggs/nu-completions"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
