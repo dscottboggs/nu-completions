@@ -5,6 +5,7 @@ mod config;
 mod dir_walker;
 mod nu;
 mod patching;
+use beau_collector::BeauCollector as _;
 
 use std::{
     fs::{create_dir, File},
@@ -14,7 +15,7 @@ use std::{
 };
 
 use config::Config;
-use log::{debug, info, trace};
+use log::{as_debug, debug, info, trace};
 
 use crate::nu::{processing_failed, CompletionsProcessor};
 
@@ -38,12 +39,22 @@ fn main() -> anyhow::Result<()> {
 
             let processor = CompletionsProcessor::default();
             info!("beginning translation phase");
-            for source in Config::sources().iter() {
+            let mut errors: Vec<Result<_, _>> = vec![];
+            for source in Config::sources() {
                 let path: PathBuf = source.into();
                 if let Err(err) = processor.process_file_or_dir(path) {
-                    return processing_failed(source, err).map(|_| unreachable!());
+                    let result = processing_failed(source, err).map(|_| unreachable!());
+                    if Config::fail_fast() {
+                        trace!("failing fast");
+                        return result;
+                    } else {
+                        trace!("deferring failure");
+                        errors.push(result);
+                    }
                 }
             }
+            debug!(error_count = errors.len(); "finished processing all translations");
+            errors.into_iter().bcollect::<Vec<()>>()?;
             processor.write_sourcing_file(&Config::imports_location())?;
             info!("finished translation phase");
         }

@@ -50,6 +50,8 @@ pub struct Config {
     /// Where nushell's env.nu is located.
     #[arg(long, default_value_os_t = xdg_config_path("nushell/env.nu"))]
     pub install_location: PathBuf,
+    #[arg(long)]
+    pub fail_fast: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -103,6 +105,10 @@ impl Config {
     }
     pub(crate) fn convert() -> bool {
         CONFIG.convert
+    }
+
+    pub(crate) fn fail_fast() -> bool {
+        CONFIG.fail_fast
     }
 
     pub(crate) fn install() -> Option<&'static Path> {
