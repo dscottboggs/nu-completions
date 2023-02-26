@@ -10,7 +10,7 @@ use std::{
 };
 
 use anyhow::Result;
-use log::{as_debug, debug, error, info, trace, warn};
+use log::{as_debug, as_serde, debug, error, info, trace, warn};
 
 use crate::{completions, config::Config, dir_walker::walk_dir};
 
@@ -198,19 +198,23 @@ impl<IO: Seek + Write> Completions<IO> {
                     }
 
                     [opt] => {
-                        def.push('-');
-                        def.push_str(opt);
+                        warn!(opt = opt; "skipping old-style long option");
+                        continue;
+                        // def.push('-');
+                        // def.push_str(opt);
                     }
                     options => {
-                        def.push('-');
-                        def.push_str(&options[0]);
-                        for opt in &options[1..] {
-                            synonyms.push(Synonym {
-                                name: format!("-{opt}"),
-                                synonym_of: format!("-{}", &options[0]),
-                                description: option.description.as_ref().map(|it| it.as_str()),
-                            });
-                        }
+                        warn!(options = as_serde!(options); "skipping old-style long options");
+                        continue;
+                        // def.push('-');
+                        // def.push_str(&options[0]);
+                        // for opt in &options[1..] {
+                        //     synonyms.push(Synonym {
+                        //         name: format!("-{opt}"),
+                        //         synonym_of: format!("-{}", &options[0]),
+                        //         description: option.description.as_ref().map(|it| it.as_str()),
+                        //     });
+                        // }
                     }
                 }
                 if def.is_empty() {
@@ -226,7 +230,9 @@ impl<IO: Seek + Write> Completions<IO> {
                 if let Some(description) = &option.description {
                     let description = description.as_str();
                     debug!(def=def, description=description; "writing description");
-                    self.write("  # {".to_owned() + description)?.eol()?;
+                    self.write("  # ".to_owned() + description)?.eol()?;
+                } else {
+                    self.eol()?;
                 }
                 rules += 1;
             }
