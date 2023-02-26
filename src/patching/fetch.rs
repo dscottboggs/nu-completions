@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
-use reqwest::get;
+use reqwest::{get, Client};
 use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
@@ -27,7 +27,14 @@ struct ReleaseResponse {
 }
 
 pub(crate) async fn fetch_latest_patch_set() -> Result<()> {
-    let latest_release: ReleaseResponse = get(format!("{API_REPO_URL}/releases/latest"))
+    let client: Client = Client::new();
+    let latest_release: ReleaseResponse = client
+        .get(format!("{API_REPO_URL}/releases/latest"))
+        .header(
+            "User-Agent",
+            "nu-completions script (reqwest) <scott+cargo@tams.tech>",
+        )
+        .send()
         .await?
         .error_for_status()?
         .json()
@@ -50,6 +57,8 @@ pub(crate) async fn fetch_latest_patch_set() -> Result<()> {
             while let Some(chunk) = asset_response.chunk().await? {
                 stdin.write_all(&chunk)?;
             }
+            drop(stdin);
+            p.wait()?.exit_ok()?;
             return Ok(());
         }
     }

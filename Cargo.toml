@@ -1,6 +1,6 @@
 [package]
 name = "nu-completion-script"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 repository = "https://github.com/dscottboggs/nu-completions"
 license = "GPL-3.0"
