@@ -15,12 +15,13 @@ use std::{
 };
 
 use config::Config;
-use log::{as_debug, debug, info, trace};
+use log::{debug, info, trace};
 
 use crate::nu::{processing_failed, CompletionsProcessor};
 
 fn main() -> anyhow::Result<()> {
     femme::with_level(Config::verbose().log_level_filter());
+    let mut conversion_errors: Vec<Result<_, _>> = vec![];
 
     if let Some(options) = Config::generate_patches() {
         patching::generate_patches(options)?;
@@ -39,7 +40,6 @@ fn main() -> anyhow::Result<()> {
 
             let processor = CompletionsProcessor::default();
             info!("beginning translation phase");
-            let mut errors: Vec<Result<_, _>> = vec![];
             for source in Config::sources() {
                 let path: PathBuf = source.into();
                 if let Err(err) = processor.process_file_or_dir(path) {
@@ -49,12 +49,11 @@ fn main() -> anyhow::Result<()> {
                         return result;
                     } else {
                         trace!("deferring failure");
-                        errors.push(result);
+                        conversion_errors.push(result);
                     }
                 }
             }
-            debug!(error_count = errors.len(); "finished processing all translations");
-            errors.into_iter().bcollect::<Vec<()>>()?;
+            debug!(error_count = conversion_errors.len(); "finished processing all translations");
             processor.write_sourcing_file(&Config::imports_location())?;
             info!("finished translation phase");
         }
@@ -63,6 +62,7 @@ fn main() -> anyhow::Result<()> {
             patching::patch_all()?;
             info!("finished patching");
         }
+        conversion_errors.into_iter().bcollect::<Vec<()>>()?;
     }
     Ok(())
 }

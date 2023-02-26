@@ -3,9 +3,11 @@ use std::{
     io::{self, Read, Write},
     path::Path,
     process::{Command, Stdio},
+    sync::{Arc, RwLock},
 };
 
 use anyhow::{anyhow, Result};
+use beau_collector::BeauCollector as _;
 use log::{as_debug, debug, error, info, trace, warn};
 use tempfile::tempdir;
 
@@ -144,6 +146,7 @@ pub(crate) fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<
         "generating patches"
     );
     let processor = CompletionsProcessor::default();
+    let regeneration_errors: Arc<RwLock<Vec<Result<()>>>> = Default::default();
     for source in opts.sources.iter() {
         walk_dir(
             source.as_ref(),
@@ -155,7 +158,15 @@ pub(crate) fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<
                 let freshly_generated = match result {
                     Ok(freshly_generated) => freshly_generated,
                     Err(err) => {
-                        return processing_failed(source, err).map(|_| unreachable!());
+                        if Config::fail_fast() {
+                            return processing_failed(source, err).map(|_| unreachable!());
+                        } else {
+                            regeneration_errors
+                                .write()
+                                .expect("rwlock write access")
+                                .push(Err(err));
+                            return Ok(());
+                        }
                     }
                 };
                 let Some(file_name) = path.file_name() else {
@@ -177,5 +188,15 @@ pub(crate) fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<
             },
         )?;
     }
+    // I can't believe this fucking works. I mean, that it's necessary is it's
+    // own absurdity, but that there's no abstraction over this and the whole
+    // song-and-dance actually solves the whole "can't move from arc" thing? wtf
+    let mut regeneration_errors_2 = vec![];
+    regeneration_errors
+        .write()
+        .expect("rwlock write access")
+        .drain(..)
+        .for_each(|result| regeneration_errors_2.push(result));
+    regeneration_errors_2.into_iter().bcollect::<Vec<()>>()?;
     Ok(())
 }

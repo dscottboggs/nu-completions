@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 use anyhow::anyhow;
 use clap::Parser;
 use derive_deref::Deref;
-use log::{as_serde, error};
+use log::{as_serde, error, trace};
 
 use defaultmap::DefaultHashMap;
 
@@ -34,6 +34,7 @@ impl Completions {
             error!(line = completion; "error parsing shell words");
             err
         })?;
+        trace!(args = as_serde!(args); "shell line");
         let mut completion = CompletionLine::try_parse_from(args).map_err(|err| {
             error!(line = completion; "error parsing completion line");
             err
