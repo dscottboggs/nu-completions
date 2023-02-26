@@ -1,0 +1,6 @@
+31c31,33
+<     --no-[to      # Clears any list of "To:", "Cc:", "Bcc:" addresses previously set via config
+---
+>     --no-to      # Clears any list of "To:" addresses previously set via config
+>     --no-cc      # Clears any list of "Cc:" addresses previously set via config
+>     --no-bcc     # Clears any list of "Bcc:" addresses previously set via config

@@ -1,0 +1,7 @@
+77,82d76
+<     --tls-max-v1.2      # Set default  maxVersion to 'TLSv1. 2'.  Use to disable support for TLSv1. 3
+<     --tls-max-v1.3      # Set default  maxVersion to 'TLSv1. 3'.  Use to enable support for TLSv1. 3
+<     --tls-min-v1.0      # Set default minVersion to 'TLSv1'
+<     --tls-min-v1.1      # Set default minVersion to 'TLSv1. 1'
+<     --tls-min-v1.2      # Set default minVersion to 'TLSv1. 2'.  This is the default for 12
+<     --tls-min-v1.3      # Set default minVersion to 'TLSv1. 3'.  Use to disable support for TLSv1

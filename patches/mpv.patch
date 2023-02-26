@@ -1,0 +1,15 @@
+36c36
+<     --play-dir(->)      # Control the playback direction (default: forward)
+---
+>     --play-dir      # Control the playback direction (default: forward)
+62d61
+<     -?      # sp I have no idea
+646d644
+<     --sub-text-*      # for ASS have been renamed from --ass-* to --sub-ass-*
+650c648,649
+<     --stream-capture/--capture      # most cases (i. e.  actually works)
+---
+>     --stream-capture
+>     --capture
+865d863
+<     --sub-* #  for ASS have been renamed from --ass-* to --sub-ass-* (synonym of --sub-text-*)

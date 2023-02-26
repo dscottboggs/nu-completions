@@ -1,0 +1,12 @@
+251c251,252
+<     --no-embed-chapters/--no-embed-info-json
+---
+>     --no-embed-chapters
+>     --no-embed-info-json
+256,257c257,259
+<     --onedir/-D      # here (https://pyinstaller. org/en/stable/usage. html#what-to-generate)
+<     --format/--match-filter
+---
+>     --onedir(-D)      # here (https://pyinstaller. org/en/stable/usage. html#what-to-generate)
+>     --format
+>     --match-filter

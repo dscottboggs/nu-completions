@@ -1,0 +1,4 @@
+97,99d96
+<     --no-merges;      # git log --cherry upstream. mybranch, similar to git cherry upstream mybranch
+<     --objects;
+<     --objects*;      # <filter-spec> may be one of the following:

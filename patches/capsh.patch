@@ -1,0 +1,6 @@
+39,40c39,40
+<     -+      # Uses cap_launch(3) to fork a child to execute the shell
+<     --mode*      # commandline arguments
+---
+>     --mode      # Display the prevailing libcap mode as guessed by the cap_get_mode(3) function.
+>     --modes     # Lists all of the libcap modes supported by --mode=<mode>.

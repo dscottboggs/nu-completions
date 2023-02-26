@@ -1,0 +1,6 @@
+5c5
+<     --display_columns][FIELD(-c)      # Display properties of block devices, RAID sets and devices in column(s)
+---
+>     --display_columns(-c)      # Display properties of block devices, RAID sets and devices in column(s)
+25d24
+<     --->

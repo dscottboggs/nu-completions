@@ -1,0 +1,6 @@
+4d3
+<     --help-<cmd>      # display help information for command <cmd> and exit
+63c62
+<     --url-map:<url>      # maps a given <url> to the given <file> for loading external resources AUTHOR …
+---
+>     --url-map      # maps a given <url> to the given <file> for loading external resources AUTHOR …

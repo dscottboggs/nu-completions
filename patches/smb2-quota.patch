@@ -1,0 +1,10 @@
+2,5c2,5
+<     --help/-h
+<     --tabular/-t      # Amount Used | Quota Limit | Warning Level | Percent Used | Status | SID
+<     --csv/-c      # SID,Amount Used,Quota Limit,Warning Level
+<     --list/-l
+---
+>     --help(-h)
+>     --tabular(-t)      # Amount Used | Quota Limit | Warning Level | Percent Used | Status | SID
+>     --csv(-c)      # SID,Amount Used,Quota Limit,Warning Level
+>     --list(-l)

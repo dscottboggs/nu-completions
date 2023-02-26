@@ -1,0 +1,132 @@
+2,46c2,46
+<     --rtmp		-rurl      # URL of the server and media content
+<     --host		-nhostname      # Overrides the hostname in the RTMP URL
+<     --port		-cport      # Overrides the port number in the RTMP URL
+<     --protocol	-lnumber      # Overrides the protocol in the RTMP URL
+<     --socks		-Shost:port      # Use the specified SOCKS4 proxy
+<     --app		-aapp      # Name of application to connect to on the RTMP server
+<     --tcUrl		-turl      # URL of the target stream.  Defaults to rtmp[e]://host[:port]/app/playpath
+<     --pageUrl		-purl      # URL of the web page in which the media was embedded
+<     --swfUrl		-surl      # URL of the SWF player for the media.  By default no value will be sent
+<     --flashVer	-fversion      # Version of the Flash plugin used to run the SWF player
+<     --auth		-ustring      # An authentication string to be appended to the Connect message
+<     --conn		-Ctype:data      # Append arbitrary AMF data to the Connect message
+<     --playpath	-ypath      # Overrides the playpath parsed from the RTMP URL
+<     --playlist		-Y      # Issue a set_playlist command before sending the play command
+<     --live		-v      # Specify that the media is a live stream
+<     --subscribe	-dstream      # Name of live stream to subscribe to.  Defaults to R playpath 
+<     --realtime	-R      # Download approximately in realtime, without attempting to speed up via Pause/…
+<     --resume		-e      # Resume an incomplete RTMP download
+<     --skip		-knum      # Skip  num keyframes when looking for the last keyframe from which to resume
+<     --start		-Anum      # Start at  num seconds into the stream.  Not valid for live streams
+<     --stop		-Bnum      # Stop at  num seconds into the stream
+<     --buffer		-bnum      # Set buffer time to  num milliseconds.  The default is 36000000
+<     --timeout		-mnum      # Timeout the session after  num seconds without receiving any data from the se…
+<     --token		-Tkey      # Key for SecureToken response, used if the server requires SecureToken authent…
+<     --jtv		-jJSON      # JSON token used by legacy Justin. tv servers.  Invokes NetStream
+<     --swfhash		-whexstring      # SHA256 hash of the decompressed SWF file
+<     --swfsize		-xnum      # Size of the decompressed SWF file
+<     --swfVfy		-Wurl      # URL of the SWF player for this media
+<     --swfAge		-Xdays      # Specify how many days to use the cached SWF info before re-checking
+<     --flv		-ooutput      # Specify the output file name
+<     --hashes		-#      # Display streaming progress with a hash mark for each 1% of progress, instead …
+<     --quiet		-q      # Suppress all command output
+<     --verbose		-V      # Verbose command output
+<     --debug		-z      # Debug level output
+<     --rtmp		-r      # URL of the server and media content
+<     --host		-n      # Overrides the hostname in the RTMP URL
+<     --port		-c      # Overrides the port number in the RTMP URL
+<     --protocol	-l      # Overrides the protocol in the RTMP URL
+<     --socks		-S      # Use the specified SOCKS4 proxy
+<     --app		-a      # Name of application to connect to on the RTMP server
+<     --tcUrl		-t      # URL of the target stream.  Defaults to rtmp[e]://host[:port]/app/playpath
+<     --pageUrl		-p      # URL of the web page in which the media was embedded
+<     --swfUrl		-s      # URL of the SWF player for the media.  By default no value will be sent
+<     --flashVer	-f      # Version of the Flash plugin used to run the SWF player
+<     --auth		-u      # An authentication string to be appended to the Connect message
+---
+>     --rtmp(-r)      # URL of the server and media content
+>     --host(-n)      # Overrides the hostname in the RTMP URL
+>     --port(-c)      # Overrides the port number in the RTMP URL
+>     --protocol(-l)      # Overrides the protocol in the RTMP URL
+>     --socks(-S)     # Use the specified SOCKS4 proxy
+>     --app(-a)       # Name of application to connect to on the RTMP server
+>     --tcUrl(-t)      # URL of the target stream.  Defaults to rtmp[e]://host[:port]/app/playpath
+>     --pageUrl(-p)      # URL of the web page in which the media was embedded
+>     --swfUrl(-s)      # URL of the SWF player for the media.  By default no value will be sent
+>     --flashVer(-f)      # Version of the Flash plugin used to run the SWF player
+>     --auth(-u)      # An authentication string to be appended to the Connect message
+>     --conn(-C)      # Append arbitrary AMF data to the Connect message
+>     --playpath(-y)      # Overrides the playpath parsed from the RTMP URL
+>     --playlist(-Y)      # Issue a set_playlist command before sending the play command
+>     --live(-v)      # Specify that the media is a live stream
+>     --subscribe(-d)      # Name of live stream to subscribe to.  Defaults to R playpath 
+>     --realtime(-R)      # Download approximately in realtime, without attempting to speed up via Pause/…
+>     --resume(-e)      # Resume an incomplete RTMP download
+>     --skip(-k)      # Skip  num keyframes when looking for the last keyframe from which to resume
+>     --start(-A)      # Start at  num seconds into the stream.  Not valid for live streams
+>     --stop(-B)      # Stop at  num seconds into the stream
+>     --buffer(-b)      # Set buffer time to  num milliseconds.  The default is 36000000
+>     --timeout(-m)      # Timeout the session after  num seconds without receiving any data from the se…
+>     --token(-T)      # Key for SecureToken response, used if the server requires SecureToken authent…
+>     --jtv(-j)      # JSON token used by legacy Justin. tv servers.  Invokes NetStream
+>     --swfhash(-w)      # SHA256 hash of the decompressed SWF file
+>     --swfsize(-x)      # Size of the decompressed SWF file
+>     --swfVfy(-W)      # URL of the SWF player for this media
+>     --swfAge(-X)      # Specify how many days to use the cached SWF info before re-checking
+>     --flv(-o)      # Specify the output file name
+>     --hashes       #      # Display streaming progress with a hash mark for each 1% of progress, instead …
+>     --quiet(-q)      # Suppress all command output
+>     --verbose(-V)      # Verbose command output
+>     --debug(-z)      # Debug level output
+>     --rtmp(-r)      # URL of the server and media content
+>     --host(-n)      # Overrides the hostname in the RTMP URL
+>     --port(-c)      # Overrides the port number in the RTMP URL
+>     --protocol(-l)      # Overrides the protocol in the RTMP URL
+>     --socks(-S)      # Use the specified SOCKS4 proxy
+>     --app(-a)      # Name of application to connect to on the RTMP server
+>     --tcUrl(-t)      # URL of the target stream.  Defaults to rtmp[e]://host[:port]/app/playpath
+>     --pageUrl(-p)      # URL of the web page in which the media was embedded
+>     --swfUrl(-s)      # URL of the SWF player for the media.  By default no value will be sent
+>     --flashVer(-f)      # Version of the Flash plugin used to run the SWF player
+>     --auth(-u)      # An authentication string to be appended to the Connect message
+48,58c48,58
+<     --conn		-C      # Append arbitrary AMF data to the Connect message
+<     --playpath	-y      # Overrides the playpath parsed from the RTMP URL
+<     --subscribe	-d      # Name of live stream to subscribe to.  Defaults to playpath 
+<     --skip		-k      # Skip num keyframes when looking for the last keyframe from which to resume
+<     --start		-A      # Start at num seconds into the stream.  Not valid for live streams
+<     --stop		-B      # Stop at num seconds into the stream
+<     --buffer		-b      # Set buffer time to num milliseconds.  The default is 36000000
+<     --timeout		-m      # Timeout the session after num seconds without receiving any data from the ser…
+<     --token		-T      # Key for SecureToken response, used if the server requires SecureToken authent…
+<     --jtv		-j      # JSON token used by legacy Justin. tv servers.  Invokes NetStream
+<     --swfhash		-w      # SHA256 hash of the decompressed SWF file
+---
+>     --conn(-C)      # Append arbitrary AMF data to the Connect message
+>     --playpath(-y)      # Overrides the playpath parsed from the RTMP URL
+>     --subscribe(-d)      # Name of live stream to subscribe to.  Defaults to playpath 
+>     --skip(-k)      # Skip num keyframes when looking for the last keyframe from which to resume
+>     --start(-A)      # Start at num seconds into the stream.  Not valid for live streams
+>     --stop(-B)      # Stop at num seconds into the stream
+>     --buffer(-b)      # Set buffer time to num milliseconds.  The default is 36000000
+>     --timeout(-m)      # Timeout the session after num seconds without receiving any data from the ser…
+>     --token(-T)      # Key for SecureToken response, used if the server requires SecureToken authent…
+>     --jtv(-j)      # JSON token used by legacy Justin. tv servers.  Invokes NetStream
+>     --swfhash(-w)      # SHA256 hash of the decompressed SWF file
+61c61
+<     --swfsize		-x      # Size of the decompressed SWF file
+---
+>     --swfsize(-x)      # Size of the decompressed SWF file
+63c63
+<     --swfVfy		-W      # URL of the SWF player for this media.  This option replaces all three of the
+---
+>     --swfVfy(-W)      # URL of the SWF player for this media.  This option replaces all three of the
+65,67c65,67
+<     --swfAge		-X      # Specify how many days to use the cached SWF info before re-checking
+<     --flv		-o      # Specify the output file name
+<     --help		-h      # Print a summary of command options.  EXIT STATUS
+---
+>     --swfAge(-X)      # Specify how many days to use the cached SWF info before re-checking
+>     --flv(-o)      # Specify the output file name
+>     --help(-h)      # Print a summary of command options.  EXIT STATUS
