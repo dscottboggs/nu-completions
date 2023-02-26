@@ -42,6 +42,13 @@ pub struct Config {
         help = "disable conversion phase"
     )]
     pub convert: bool,
+    #[arg(
+        long = "no-update-patches",
+        action = ArgAction::SetFalse,
+        default_value_t = true,
+        help = "skip updating the standard patch-set from github"
+    )]
+    pub update_patch_set: bool,
     #[command(subcommand)]
     pub patches: Option<PatchesCommand>,
     /// Add a line to the env config importing all of the defined completions
@@ -109,6 +116,9 @@ impl Config {
 
     pub(crate) fn fail_fast() -> bool {
         CONFIG.fail_fast
+    }
+    pub(crate) fn update_patch_set() -> bool {
+        CONFIG.update_patch_set
     }
 
     pub(crate) fn install() -> Option<&'static Path> {

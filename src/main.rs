@@ -6,6 +6,7 @@ mod dir_walker;
 mod nu;
 mod patching;
 use beau_collector::BeauCollector as _;
+use patching::fetch_latest_patch_set;
 
 use std::{
     fs::{create_dir, File},
@@ -19,7 +20,8 @@ use log::{debug, info, trace};
 
 use crate::nu::{processing_failed, CompletionsProcessor};
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     femme::with_level(Config::verbose().log_level_filter());
     let mut conversion_errors: Vec<Result<_, _>> = vec![];
 
@@ -28,6 +30,9 @@ fn main() -> anyhow::Result<()> {
     } else if let Some(install_location) = Config::install() {
         install_config(install_location)?;
     } else {
+        if Config::update_patch_set() {
+            fetch_latest_patch_set().await?;
+        }
         if Config::convert() {
             if !Config::output_dir().exists() {
                 trace!(
