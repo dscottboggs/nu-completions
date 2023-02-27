@@ -1,6 +1,7 @@
 //! Fetch the default patch set
 
 use std::{
+    fs::create_dir_all,
     io::Write,
     process::{Command, Stdio},
 };
@@ -39,16 +40,16 @@ pub(crate) async fn fetch_latest_patch_set() -> Result<()> {
         .error_for_status()?
         .json()
         .await?;
+    let target_dir = Config::patch_dir()
+        .parent()
+        .expect("patch dir to have a parent");
+    create_dir_all(target_dir)?;
     for asset in &latest_release.assets {
         if asset.name == "patches.tar.gz" {
             let mut asset_response = get(&asset.browser_download_url).await?.error_for_status()?;
             let mut p = Command::new("tar")
                 .arg("xz")
-                .current_dir(
-                    Config::patch_dir()
-                        .parent()
-                        .expect("patch dir to have a parent"),
-                )
+                .current_dir(target_dir)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
