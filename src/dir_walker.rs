@@ -19,11 +19,11 @@ where
             &path
                 .read_link()
                 .map_err(|e| anyhow!("error dereferencing symlink at {path:?}: {e:?}"))?,
-            extra_arg.clone(),
+            extra_arg,
             callback,
         )
     } else if path.is_file() {
-        callback(path.to_path_buf(), extra_arg.clone())
+        callback(path.to_path_buf(), extra_arg)
     } else if path.exists() {
         // I will be surprised if we encounter either of these two final cases.
         Err(anyhow!("incompatible file: {path:?} exists, but is neither a directory, a symlink, nor a file."))

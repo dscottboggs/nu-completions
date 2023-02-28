@@ -34,7 +34,7 @@ fn generate_patch(source: &Path, generated: &Path, destination: &Path) -> Result
         let n = stdout.read(&mut buf)?;
         &buf[..n]
     };
-    if first_read.len() > 0 {
+    if !first_read.is_empty() {
         trace!(first_read = first_read.len(); "read bytes from stdout, writing diff to file");
         match File::create(destination) {
             Ok(mut destination) => {

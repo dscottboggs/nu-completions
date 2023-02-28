@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::Result;
 use beau_collector::BeauCollector as _;
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, trace, warn};
 
 use crate::config::Config;
 pub(crate) use fetch::fetch_latest_patch_set;

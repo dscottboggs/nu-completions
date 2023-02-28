@@ -4,7 +4,6 @@ use std::{
     fs::File,
     io::BufRead,
     io::{self, BufReader, Seek, Write},
-    iter::repeat,
     path::{Path, PathBuf},
     sync::{LazyLock, RwLock},
 };
@@ -59,7 +58,7 @@ impl CompletionsProcessor {
             .into());
         }
         let errmsg = format!("reading file {path:#?}");
-        let file = BufReader::new(File::open(&path)?);
+        let file = BufReader::new(File::open(path)?);
         trace!(file = as_debug!(path); "opened file for processing");
         let completions =
             completions::Completions::parse(file.lines().map(|line| line.expect(&errmsg)))?;
@@ -124,7 +123,7 @@ impl<IO: Seek + Write> Completions<IO> {
     }
 
     fn eol(&mut self) -> Result<&mut Self> {
-        write!(self.io, "\n")?;
+        writeln!(self.io)?;
         Ok(self)
     }
 
@@ -160,9 +159,7 @@ impl<IO: Seek + Write> Completions<IO> {
                                             name: format!("-{opt}"),
                                             synonym_of: format!("--{}", &options[0]),
                                             description: option
-                                                .description
-                                                .as_ref()
-                                                .map(|it| it.as_str()),
+                                                .description.as_deref(),
                                         });
                                     }
                                 }
@@ -180,9 +177,7 @@ impl<IO: Seek + Write> Completions<IO> {
                                         name: format!("-{opt}"),
                                         synonym_of: format!("--{}", &option.long[0]),
                                         description: option
-                                            .description
-                                            .as_ref()
-                                            .map(|it| it.as_str()),
+                                            .description.as_deref(),
                                     });
                                 }
                             }
@@ -191,7 +186,7 @@ impl<IO: Seek + Write> Completions<IO> {
                                 synonyms.push(Synonym {
                                     name: format!("--{opt}"),
                                     synonym_of: format!("--{}", &option.long[0]),
-                                    description: option.description.as_ref().map(|it| it.as_str()),
+                                    description: option.description.as_deref(),
                                 });
                             }
                         }
@@ -269,7 +264,7 @@ impl<IO: Seek + Write> Completions<IO> {
             let max_cached = cache.len();
             trace!(max_cached=max_cached, target_indent=self.indent; "indent not yet cached, filling");
             for i in max_cached..=self.indent {
-                let text: String = repeat(' ').take(i * 4).collect();
+                let text: String = " ".repeat(i * 4);
                 trace!(level=i, str=text.as_str(); "caching indent level");
                 cache.push(text);
             }
