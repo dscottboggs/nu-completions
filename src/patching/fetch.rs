@@ -14,12 +14,15 @@ use crate::config::Config;
 
 static API_REPO_URL: &str = "https://api.github.com/repos/dscottboggs/nu-completions";
 
+/// The relevant fields from the "assets" part of the GitHub API releases
+/// response.
 #[derive(Debug, Serialize, Deserialize)]
 struct AssetResponse {
     name: String,
     browser_download_url: String,
 }
 
+/// The relevant fields from the GitHub releases response
 #[derive(Debug, Serialize, Deserialize)]
 struct ReleaseResponse {
     url: String,
@@ -27,6 +30,8 @@ struct ReleaseResponse {
     assets: Vec<AssetResponse>,
 }
 
+/// Unpack the latest patches from the tarball in the latest release on GitHub,
+/// into [`Config::patch_dir()`].
 pub(crate) async fn fetch_latest_patch_set() -> Result<()> {
     let client: Client = Client::new();
     let latest_release: ReleaseResponse = client

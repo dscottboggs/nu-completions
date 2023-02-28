@@ -17,6 +17,7 @@ use beau_collector::BeauCollector as _;
 use log::{as_debug, debug, error, trace};
 use tempfile::tempdir;
 
+/// Write the difference between `source` and `generated` to `destination`.
 fn generate_patch(source: &Path, generated: &Path, destination: &Path) -> Result<()> {
     trace!(
         source = as_debug!(source), generated = as_debug!(generated),
@@ -66,6 +67,8 @@ fn generate_patch(source: &Path, generated: &Path, destination: &Path) -> Result
     }
 }
 
+/// Output the differences between the definitions defined at `opts.from` and
+/// the definitions generated from `opts.sources` into the `opts.to` directory.
 pub(crate) fn generate_patches(opts: &config::PatchesGenerateOptions) -> Result<()> {
     let freshly_generated_store = tempdir()?;
     trace!(

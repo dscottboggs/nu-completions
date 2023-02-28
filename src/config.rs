@@ -1,3 +1,4 @@
+//! This configures how the script is run through its command-line arguments.
 use std::{
     env,
     ffi::OsString,

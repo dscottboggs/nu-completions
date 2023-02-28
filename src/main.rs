@@ -72,6 +72,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Add a line to nu's env config to source the defined completions.
 fn install_config(location: &Path) -> anyhow::Result<()> {
     static CONFIG_DEF: LazyLock<String> =
         LazyLock::new(|| format!("source {:?}", Config::imports_location()));

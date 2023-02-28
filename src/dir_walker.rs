@@ -4,6 +4,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Call the `callback` on each file in the given `path`, following symlinks.
+/// For each call to `callback`, `extra_arg` is cloned and that clone is moved
+/// into the call. It's recommended to use an `Arc` for any `extra_arg` which
+/// isn't trivial to clone.
 pub fn walk_dir<T, F>(path: &Path, extra_arg: T, callback: F) -> Result<()>
 where
     F: Fn(PathBuf, T) -> Result<()> + Send + Sync + Clone,

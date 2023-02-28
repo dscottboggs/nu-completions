@@ -13,20 +13,28 @@ use crate::completion_line::CompletionLine;
 pub(crate) struct Completions(Arc<RwLock<DefaultHashMap<String, Vec<CompletionLine>>>>);
 
 impl Completions {
+    /// Construct a new [`Completions`] by parsing the given lines.
     pub(crate) fn parse(lines: impl Iterator<Item = impl AsRef<str>>) -> anyhow::Result<Self> {
         Completions::default().parse_completions(lines)
     }
+
+    /// Add a new [`CompletionLine`] to this collection by parsing the line it
+    /// was defined in.
     pub(crate) fn parse_one_completion(self, completion: impl AsRef<str>) -> anyhow::Result<()> {
         let completion_ref = completion.as_ref();
         let completion = CompletionLine::escape_options_which_start_with_a_dash(completion_ref);
         // Fish uses backslash to escape quotes, whereas every other shell (and
         // the shell_words crate) do this '"'"' thing. Also, there was at least
-        // one instance of \\' (two backslashes then an apostrophe), so we need
-        // to get rid of double-backslash instances and then put them back
-        // after we're done with the whole quotes issue.
+        // one instance of \\' (two backslashes i.e. an escaped backslash and
+        // then an apostrophe), so we need to get rid of double-backslash
+        // instances and then put them back after we're done with the whole
+        // quotes issue.
         let args = shell_words::split(
             &completion
                 .replace("\\\\", "\u{FFFD}")
+                // note that this ---------^^^^^^^^ is a different escape
+                // character than the one used by
+                // CompletionLine::escape_options_which_start_with_a_dash
                 .replace("\\'", r#"'"'"'"#)
                 .replace('\u{FFFD}', "\\\\"),
         )

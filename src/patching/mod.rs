@@ -13,6 +13,7 @@ use crate::config::Config;
 pub(crate) use fetch::fetch_latest_patch_set;
 pub(crate) use generate::generate_patches;
 
+/// Apply the `patch` to `source` using `patch(1)`.
 pub(crate) fn patch(source: impl AsRef<Path>, patch: impl AsRef<Path>) -> Result<()> {
     let source = source.as_ref().as_os_str();
     let patch = patch.as_ref().as_os_str();
