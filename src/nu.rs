@@ -158,8 +158,7 @@ impl<IO: Seek + Write> Completions<IO> {
                                         synonyms.push(Synonym {
                                             name: format!("-{opt}"),
                                             synonym_of: format!("--{}", &options[0]),
-                                            description: option
-                                                .description.as_deref(),
+                                            description: option.description.as_deref(),
                                         });
                                     }
                                 }
@@ -176,8 +175,7 @@ impl<IO: Seek + Write> Completions<IO> {
                                     synonyms.push(Synonym {
                                         name: format!("-{opt}"),
                                         synonym_of: format!("--{}", &option.long[0]),
-                                        description: option
-                                            .description.as_deref(),
+                                        description: option.description.as_deref(),
                                     });
                                 }
                             }
