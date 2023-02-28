@@ -6,8 +6,8 @@ use std::{
 };
 
 use anyhow::Result;
-
-use log::{debug, info, trace, warn};
+use beau_collector::BeauCollector as _;
+use log::{debug, error, info, trace, warn};
 
 use crate::config::Config;
 pub(crate) use fetch::fetch_latest_patch_set;
@@ -35,7 +35,7 @@ pub(crate) fn patch(source: impl AsRef<Path>, patch: impl AsRef<Path>) -> Result
             );
         })
         .map_err(|status| {
-            warn!(
+            error!(
                 source = source.to_string_lossy(),
                 patch = patch.to_string_lossy(),
                 patch_output = patch_output,
@@ -46,7 +46,14 @@ pub(crate) fn patch(source: impl AsRef<Path>, patch: impl AsRef<Path>) -> Result
         })
 }
 
+/// Pass all sources specified in [`Config::sources()`].
+///
+/// ## Errors:
+/// If [`Config::fail_fast()`] is true, this returns an error if any `patch`
+/// command fails. Otherwise, any errors encountered patching individual files
+/// are collected together into a single error.
 pub(crate) fn patch_all() -> Result<()> {
+    let mut errors = vec![Ok(())];
     for source in Config::sources() {
         trace!(source = source.to_string_lossy(); "checking for patches");
         let source: &Path = source.as_ref();
@@ -68,9 +75,15 @@ pub(crate) fn patch_all() -> Result<()> {
                 .expect("to be able to extract file name from path"); // this is already checked for
             let def = Config::output_dir().join(def);
             if def.exists() {
-                patch(def, patch_file)?;
+                if let Err(error) = patch(def, patch_file) {
+                    if Config::fail_fast() {
+                        return Err(error);
+                    } else {
+                        errors.push(Err(error));
+                    }
+                }
             } else {
-                info!(
+                warn!(
                     source = source.to_string_lossy(),
                     patch_file = patch_file.to_string_lossy();
                     "source and patch found, but no converted definition. Perhaps conversion failed?"
@@ -80,5 +93,5 @@ pub(crate) fn patch_all() -> Result<()> {
             trace!(source = source.to_string_lossy(), patch = patch_file.to_string_lossy(); "no patches found");
         }
     }
-    Ok(())
+    errors.into_iter().bcollect()
 }
