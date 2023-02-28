@@ -1,0 +1,31 @@
+0a1,27
+> def "nu-complete man page" [] {
+>     man -k .
+>         | lines
+>         | parse "{page}({section}) - {description}"
+>         | each { |page|
+>             $page.page
+>             | split row ", "
+>             | each { |val| {value: $val, description: $page.description}}
+>         }
+>         | flatten
+> }
+> 
+> def "nu-complete man section" [] {
+>     [
+>         {value: '1', description: "General commands (tools and utilities)."},
+>         {value: '2', description: "System calls and error numbers."},
+>         {value: '3', description: "Library functions."},
+>         {value: '3p', description: "perl(1) programmer's reference guide."},
+>         {value: '4', description: "Device drivers."},
+>         {value: '5', description: "File formats."},
+>         {value: '6', description: "Games."},
+>         {value: '7', description: "Miscellaneous information."},
+>         {value: '8', description: "System maintenance and operation commands."},
+>         {value: '9', description: "Kernel internals."}
+>     ]
+> }
+> 
+12a40,41
+>     # section?: string@"nu-complete man section"
+>     ...page: string@"nu-complete man page"
