@@ -3,6 +3,14 @@
 This is a system for generating [`extern def`](https://www.nushell.sh/book/custom_completions.html#modules-and-custom-completions)s (tab-completion) in
 [nu](nushell.sh).
 
+> **Note:**
+> This is not yet in a working state. Well, that is to say, it works fine if
+  you're running Arch Linux, but testing on other distributions has immediately
+  revealed that there are significant differences between distributions. We may
+  need to start keeping track of patch-sets separately for each distribution,
+  or perhaps switch to keeping track of the files themselves rather than a set
+  of patches, or maybe both.
+
 ## Background
 The [fish shell](fishshell.com/) project has a [long, complicated script](https://github.com/fish-shell/fish-shell/blob/master/share/tools/create_manpage_completions.py)
 for parsing man pages to gather completions definitions. Fortunately for us,
