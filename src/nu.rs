@@ -5,6 +5,7 @@ use std::{
     io::BufRead,
     io::{self, BufReader, Seek, Write},
     path::{Path, PathBuf},
+    process::{Command, Stdio},
     sync::{LazyLock, RwLock},
 };
 
@@ -76,6 +77,7 @@ impl CompletionsProcessor {
         let completions =
             completions::Completions::parse(file.lines().map(|line| line.expect(&errmsg)))?;
         trace!("successfully parsed completions for {path:?}");
+        {}
         let location = output_dir.join(
             path.with_extension("nu")
                 .file_name()
@@ -303,3 +305,24 @@ impl<IO: Seek + Write> Completions<IO> {
 }
 
 static INDENT_CACHE: LazyLock<RwLock<Vec<String>>> = LazyLock::new(|| RwLock::new(vec![]));
+
+pub(crate) static INTERNAL_COMMANDS: LazyLock<Vec<String>> = LazyLock::new(|| {
+    let cmd = Command::new("nu")
+        .arg("-c")
+        .arg("help commands | where command_type != external | get name | str join (char nl)")
+        .stdout(Stdio::piped())
+        .output()
+        .expect("nu help commands to succeed");
+    if cmd.status.success() {
+        let list = cmd
+            .stdout
+            .split(|c| *c == 0xA)
+            .map(String::from_utf8_lossy)
+            .map(String::from)
+            .collect();
+        info!(internal_commands = as_debug!(list); "internal command list gathered");
+        list
+    } else {
+        panic!("nu help command failed")
+    }
+});

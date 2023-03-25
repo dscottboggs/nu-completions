@@ -3,11 +3,11 @@ use std::sync::{Arc, RwLock};
 use anyhow::anyhow;
 use clap::Parser;
 use derive_deref::Deref;
-use log::{as_serde, error, trace};
+use log::{as_serde, error, info, trace};
 
 use defaultmap::DefaultHashMap;
 
-use crate::completion_line::CompletionLine;
+use crate::{completion_line::CompletionLine, nu::INTERNAL_COMMANDS};
 
 #[derive(Debug, Default, Deref, Clone)]
 pub(crate) struct Completions(Arc<RwLock<DefaultHashMap<String, Vec<CompletionLine>>>>);
@@ -51,6 +51,10 @@ impl Completions {
             error!(completion = as_serde!(completion), line_text = completion_ref; "completion contained no command name");
             return Err(anyhow!("completion contained no command name: {completion:?}"));
         };
+        if INTERNAL_COMMANDS.contains(command_name) {
+            info!(command = command_name; "skipping internal command");
+            return Ok(());
+        }
         completion.description = completion
             .description
             .map(CompletionLine::unescape_option_which_starts_with_a_dash);
