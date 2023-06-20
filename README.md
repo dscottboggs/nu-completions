@@ -1,5 +1,17 @@
 # [Nushell](nushell.sh) completions pack
 
+## Moving on...
+
+I think I'm going to abandon this project. Man pages are inconsistent across distributions, even for packages that are the same version. Whether you go all overboard like this and try to track a patch set, or just generate the completions once and track those completion files, you're stuck tracking changes to man pages in some way or another constantly for every distro.
+
+Even if you do manage to put together enough people to do that thankless work and manage to get this overengineered solution to be robust and less klunky, there's another problem: nu takes about 1 second to load 1000 completion files on launch, meaning that launching my shell took at least 4.5-5 seconds every time. I put up with this for a little while, but then realized in a near-OOM situation I had no way to get to a shell that would open without compounding the problem by a lot (since `nu` was my default shell).
+
+I think that I'll probably be trying out [these instructions for setting up Carapace](http://www.nushell.sh/book/custom_completions.html#external-completions) for completions next time I need to scratch this itch.
+
+If you're interested in continuing this work feel free to fork it, and reach out to me if you need any help understanding the source, I've just gotten to the point where I can tell that the maintenance burden of this project is higher than I expected to take on when I wrote it.
+
+----
+
 This is a system for generating [`extern def`](https://www.nushell.sh/book/custom_completions.html#modules-and-custom-completions)s (tab-completion) in
 [nu](nushell.sh).
 
