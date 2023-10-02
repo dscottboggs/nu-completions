@@ -1,4 +1,4 @@
-#![feature(once_cell, never_type, exit_status_error, async_closure, let_chains)]
+#![feature(lazy_cell, once_cell, never_type, exit_status_error, async_closure, let_chains)]
 mod completion_line;
 mod completions;
 mod config;
